@@ -45,16 +45,16 @@ public class TransitionRelation extends TransitionMapping {
 	}
 	
 	@Override
-	public Set<State> getStartStates(State intialState) {			
+	public Set<State> eps(State state) {			
 		Set<State> startStates = new HashSet<>();
-		startStates.add(intialState);
+		startStates.add(state);
 		
 		for(Map.Entry<State, Set<Transition>> m : transitions.entrySet()) {
-			if(m.getKey().compareTo(intialState)==0) {
+			if(m.getKey().compareTo(state)==0) {
 				for(Transition t: m.getValue()) {
 					if(t.symbol()==Alphabet.EPSILON) {
 						startStates.add(t.toState());
-						intialState=t.toState();
+						state=t.toState();
 					}
 				}
 			}

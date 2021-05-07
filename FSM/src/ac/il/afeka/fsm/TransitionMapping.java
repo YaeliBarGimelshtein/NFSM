@@ -78,7 +78,7 @@ public abstract class TransitionMapping {
 		}
 	}
 	
-	abstract public Set<State> getStartStates(State intialState);
+	abstract public Set<State> eps(State state);
 
 	
 }

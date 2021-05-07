@@ -355,7 +355,7 @@ public class NDFSM {
 		Alphabet newAlphabet = this.alphabet;
 		
 		//S 
-		Set<State> newstartStates= this.transitions.getStartStates(this.initialState);
+		Set<State> newstartStates= this.transitions.eps(this.initialState);
 		
 		//delta + k
 		
