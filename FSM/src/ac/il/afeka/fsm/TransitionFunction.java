@@ -85,12 +85,5 @@ public class TransitionFunction extends TransitionMapping {
 		}
 	}
 
-	@Override
-	public Set<State> eps(State state) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
 	 
 }

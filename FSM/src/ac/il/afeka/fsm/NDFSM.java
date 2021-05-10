@@ -3,6 +3,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -306,29 +307,45 @@ public class NDFSM {
 	}
 	
 	
-	 public Set<Set<State>> powerSet(Set<State> set) {
-	       Set<Set<State>> powerSets = new HashSet<>();  // we define powerset.
-
-	       Set<State> emptySet = new HashSet<>();
-	       powerSets.add(emptySet); // start with the empty set.
-
-
-	       for (State item: set) { // We want to add each item to all previous subsets.
-	         Set<Set<State>> foundSets = new HashSet<Set<State>>(powerSets);
-	         for (Set<State> foundSet: foundSets) {
-	           Set<State> newSet = new HashSet<State>(foundSet);
-	           newSet.add(item); // Add each item to all previously found subsets.
-	           powerSets.add(newSet); // Add new subset to all subsets found.
-	         }
-	       }
-	       return powerSets;
-	     }
+	
+	
+	/////////// our code /////////////////////////////////
+	
+	
+	public Set<State> eps(State state) {	
+		//get all states with eps transition
+		Set<State> statesWithEps = this.transitions.at(state, Alphabet.EPSILON); 
+		
+		//if from this state no eps transtions return this state only
+		if(statesWithEps.isEmpty()) {  
+			Set<State> states=new HashSet<>();
+			states.add(state);
+			return states;
+		}
+		
+		//go over all states and check eps for them
+		Set<State> helper= this.transitions.at(state, Alphabet.EPSILON); // helps to check all states
+		Iterator<State> it= helper.iterator();
+		while(!helper.isEmpty()) {
+			State cur= it.next();
+			statesWithEps.addAll(this.transitions.at(cur, Alphabet.EPSILON));
+			helper.addAll(this.transitions.at(cur, Alphabet.EPSILON));
+			helper.remove(cur);
+		}
+		return statesWithEps;
+	}
+	
+	
+	
 	
 	
 	 public Set<Set<State>> acceptingStates(Set<Set<State>> set) {
+		 //creating an group of accepting groups of states
 		 Set<Set<State>> newAcceptingStates = new HashSet<>(); 
-		 for (Set<State> foundSet: set) {
-			 for (State state: foundSet) {
+		
+		 //loop to find all groups that contain an accepting state
+		 for (Set<State> foundSet: set) { //go over all groups of states
+			 for (State state: foundSet) { //go over all states in a group
 				if(acceptingStates.contains(state)) {
 					newAcceptingStates.add(foundSet);
 				}
@@ -337,12 +354,31 @@ public class NDFSM {
 		 return newAcceptingStates;
 	 }
 	 
-	 public Set<Transition> createFunction(Set<State> newstartStates) {
-		 for (State state : newstartStates) {
-			for (Character c : this.alphabet) {
-				
-			}
-		}
+	 
+	 
+	 
+	 
+	 public Set<Transition> createFunctionAndAllStates(Set<State> newstartStates) {
+		//create the trans func and helper
+		 Set<Transition> allTrans= new HashSet<>();  
+		 Set<Set<State>> helper= new HashSet<>();  
+		 
+		 //iterate over states
+		 Iterator<Set<State>> it=helper.iterator();
+		 helper.add(newstartStates);
+		
+		 
+		 //loop until go over all states
+		 while(!helper.isEmpty()) {
+			 Set<State> curGroupOfStates= it.next(); //take current group of states
+			 for (State state : curGroupOfStates) { //go over each state
+					for (Character c : this.alphabet) { //go over each char in alphabet
+						
+					}
+				}
+		 }
+		 
+		 
 		 
 		return null;
 		 
@@ -355,15 +391,15 @@ public class NDFSM {
 		Alphabet newAlphabet = this.alphabet;
 		
 		//S 
-		Set<State> newstartStates= this.transitions.eps(this.initialState);
+		Set<State> newstartStates= this.eps(this.initialState);
 		
 		//delta + k
 		
 		//k: not ok need to change this
-		Set<Set<State>> newStates= this.powerSet(this.states);
+		//Set<Set<State>> newStates= this.powerSet(this.states);
 		
 		//A:
-		Set<Set<State>> newAcceptingStates= this.acceptingStates(newStates);
+		//Set<Set<State>> newAcceptingStates= this.acceptingStates(newStates);
 		
 		
 		
