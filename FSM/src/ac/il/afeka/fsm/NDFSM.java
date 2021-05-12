@@ -332,6 +332,7 @@ public class NDFSM {
 			helper.addAll(this.transitions.at(cur, Alphabet.EPSILON));
 			helper.remove(cur);
 		}
+		statesWithEps.add(state);
 		return statesWithEps;
 	}
 	
@@ -369,14 +370,7 @@ public class NDFSM {
 		
 		 
 		 //loop until go over all states
-		 while(!helper.isEmpty()) {
-			 Set<State> curGroupOfStates= it.next(); //take current group of states
-			 for (State state : curGroupOfStates) { //go over each state
-					for (Character c : this.alphabet) { //go over each char in alphabet
-						
-					}
-				}
-		 }
+		 
 		 
 		 
 		 
@@ -394,9 +388,29 @@ public class NDFSM {
 		Set<State> newstartStates= this.eps(this.initialState);
 		
 		//delta + k
+		Set<Transition> delta= new HashSet<>();
+		Set<Set<State>> helper= new HashSet<>();  //to check all other states
+		Set<Set<State>> k = new HashSet<>(); 
+		Iterator<Set<State>> it=helper.iterator(); //to go over the helper
+		while(!helper.isEmpty()) {
+			 Set<State> curGroupOfStates= it.next(); //take current group of states
+			 for (State state : curGroupOfStates) { //go over each state
+					for (Character c : this.alphabet) { //go over each char in alphabet
+						Set<State> cur=this.transitions.at(state, c); // for each new state need to check eps
+						Set<Set<State>> curGroup= new HashSet<>(); //create new group of eps states
+						for(State s: cur) {
+							curGroup.add(eps(s));
+						}
+						helper.addAll(curGroup);
+						k.addAll(curGroup);
+						delta.add(new Transition(curGroupOfStates, c, curGroup));
+					}
+				}
+			 helper.remove(curGroupOfStates);
+		 }
+		 
+	 
 		
-		//k: not ok need to change this
-		//Set<Set<State>> newStates= this.powerSet(this.states);
 		
 		//A:
 		//Set<Set<State>> newAcceptingStates= this.acceptingStates(newStates);
