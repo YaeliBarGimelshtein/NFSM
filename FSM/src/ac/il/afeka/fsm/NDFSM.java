@@ -3,7 +3,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -302,7 +301,7 @@ public class NDFSM {
 		return aNDFSM;
 	}
 	
-	public boolean compute(String input) {
+	public boolean compute(String input) throws Exception {
 		return toDFSM().compute(input);
 	}
 	
@@ -312,17 +311,49 @@ public class NDFSM {
 	/////////// our code /////////////////////////////////
 	
 	
-	public Set<State> eps(State state) {	
+//	public Set<State> eps(State state) {	
+//		//get all states with eps transition
+//		Set<State> statesWithEps = new HashSet<>();
+//		statesWithEps.addAll(this.transitions.at(state, Alphabet.EPSILON)); 
+//		
+//		
+//		//if from this state no eps transtions return this state only
+//		if(statesWithEps.isEmpty()) {  
+//			Set<State> states=new HashSet<>();
+//			states.add(state);
+//			return states;
+//		}
+//		
+//		//go over all states and check eps for them
+//		ArrayList<State> helper = new ArrayList<>();// helps to check all states
+//		helper.add(state);
+//		State cur=null;
+//		while(!helper.isEmpty()) {
+//			cur= helper.get(0);
+//			helper.addAll(this.transitions.at(cur, Alphabet.EPSILON));
+//			for (int i = 0; i < helper.size(); i++) {
+//				if(!statesWithEps.contains(helper.get(i))) {
+//					statesWithEps.add(helper.get(i));
+//				}
+//			}
+//			helper.remove(0);
+//		}
+//		return statesWithEps;
+//	}
+//	
+	
+	public StatesInGroups eps(State state) {	
 		//get all states with eps transition
-		Set<State> statesWithEps = new HashSet<>();
-		statesWithEps.addAll(this.transitions.at(state, Alphabet.EPSILON)); 
+		StatesInGroups statesWithEps = new StatesInGroups(null);
+		statesWithEps.getStatesGroup().addAll(this.transitions.at(state, Alphabet.EPSILON)); 
 		
 		
 		//if from this state no eps transtions return this state only
-		if(statesWithEps.isEmpty()) {  
+		if(statesWithEps.getStatesGroup().isEmpty()) {  
 			Set<State> states=new HashSet<>();
 			states.add(state);
-			return states;
+			statesWithEps.setStatesGroup(states);
+			return statesWithEps;
 		}
 		
 		//go over all states and check eps for them
@@ -333,8 +364,8 @@ public class NDFSM {
 			cur= helper.get(0);
 			helper.addAll(this.transitions.at(cur, Alphabet.EPSILON));
 			for (int i = 0; i < helper.size(); i++) {
-				if(!statesWithEps.contains(helper.get(i))) {
-					statesWithEps.add(helper.get(i));
+				if(!statesWithEps.getStatesGroup().contains(helper.get(i))) {
+					statesWithEps.getStatesGroup().add(helper.get(i));
 				}
 			}
 			helper.remove(0);
@@ -344,16 +375,15 @@ public class NDFSM {
 	
 	
 	
-	
-	
-	public Set<StatesInGroups> acceptingStates(Set<StatesInGroups> set) {
+	public Set<State> acceptingStates(Set<State> set) {
 		// creating an group of accepting groups of states
-		Set<StatesInGroups> newAcceptingStates = new HashSet<>();
+		Set<State> newAcceptingStates = new HashSet<>();
 
 		// loop to find all groups that contain an accepting state
-		for (StatesInGroups foundSet : set) { // go over all groups of states
-			Set<State> x = foundSet.getStatesGroup();
-			for (State state : x) {
+		for (State foundSet : set) { // go over all groups of states
+			StatesInGroups x = (StatesInGroups)foundSet;
+			Set<State> y=x.getStatesGroup();
+			for (State state : y) {
 				if (acceptingStates.contains(state)) {
 					newAcceptingStates.add(foundSet);
 				}
@@ -364,92 +394,100 @@ public class NDFSM {
 	 
 	
 	
-	public DFSM toDFSM() {
+	public DFSM toDFSM() throws Exception {
 		//Alphabet:
 		Alphabet newAlphabet = this.alphabet;
 		
 		//S 
-		Set<State> newstartStates= this.eps(this.initialState);
+		StatesInGroups initialStates = this.eps(this.initialState);
 		
 		//delta + k
 		Set<Transition> delta= new HashSet<>();
-		ArrayList<Set<State>> helper= new ArrayList<>();
-		Set<StatesInGroups> k = new HashSet<>(); 
-		StatesInGroups curHelper = new StatesInGroups(null);
-		int counterOfStates=0;
-		helper.add(newstartStates);
+		Set<State> k = new HashSet<>(); 
+		
+		//loop on helper array and find out new states(groups of states) and add transitions to delta
+		ArrayList<StatesInGroups> helper= new ArrayList<>();
+		helper.add(initialStates);
+		StatesInGroups helperForDelta= new StatesInGroups(null);
+		
 		while (!helper.isEmpty()) {
-			StatesInGroups curGroupOfStates = new StatesInGroups(helper.get(0)); // take current group of states
-			for (State state : curGroupOfStates.getStatesGroup()) { // go over each state
+			StatesInGroups currentGroupOfStatesToCheckTransitions = helper.get(0); // take current group of states in the helper																	
+			for (State state : currentGroupOfStatesToCheckTransitions.getStatesGroup()) { // go over each state in the current group
 				for (Character c : this.alphabet) { // go over each char in alphabet
 					if (c != 0) {
-						counterOfStates++;
-						Set<State> cur = this.transitions.at(state, c); // for each new state need to check eps
-						StatesInGroups curGroup = new StatesInGroups(curHelper.getStatesGroup());// create new group of eps states
-						for (State s : cur) 
-							curGroup.getStatesGroup().addAll((eps(s)));
+						//crate the group of toState from state+ c
+						Set<State> statesGotFromCurrentStateByTransition = this.transitions.at(state, c); // for each new state need to check where it leads
+						StatesInGroups toStateWithEps = new StatesInGroups(null);// create new group of eps states
+						for (State s : statesGotFromCurrentStateByTransition) 
+							toStateWithEps=eps(s); //add new states the current state leads to with eps function
 						
-						if (!helper.contains(curGroup.getStatesGroup()) && !curGroup.getStatesGroup().isEmpty()) {
-							helper.add(curGroup.getStatesGroup());
+						//add to helper if the toState group is not already there
+						boolean dontAdd=false;
+						for (StatesInGroups s : helper) {
+							if(s.equals(toStateWithEps))
+								dontAdd=true;
 						}
+						if(!dontAdd && !toStateWithEps.getStatesGroup().isEmpty())
+							helper.add(toStateWithEps);
 						
-						if(!curGroup.getStatesGroup().isEmpty())  //add to k
-							k.add(curGroup);
+						//add to k the new State
+						if(!toStateWithEps.getStatesGroup().isEmpty()) 
+							k.add(toStateWithEps);
 						
-						boolean flag=false;
-						if(curGroup.getStatesGroup().isEmpty() && counterOfStates==curGroupOfStates.getStatesGroup().size()) {
-							for (StatesInGroups s : k) {
-								if(s.getStatesGroup().isEmpty()){
-									flag=true;
-								}
-							}
-							if(!flag)
-								k.add(curGroup);
-						}
-						
+						//add to delta the new transition
 						boolean containsTheSame=false;
 						boolean containsEmpty=false;
 						boolean containsNotEmptyNotSame=false;
 						Transition temp= null;
 						
-						
 						for (Transition t : delta) {
-							if(t.symbol()== c && t.fromState().equals(curGroupOfStates) && t.toState().equals(curGroup)) {
+							// if already exsists the same exactlly---> do not add again
+							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && t.toState().equals(toStateWithEps)) {
 								containsTheSame=true;
 							}
-							if(t.symbol()== c && t.fromState().equals(curGroupOfStates) && t.toState().equals(curHelper)) {
+							// if the transition exsists : same fromState , same char but toState empty ---> put this new transition instead old one
+							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && t.toState().equals(helperForDelta)) {
 								containsEmpty=true;
 								temp=t;
 							}
-							if(t.symbol()== c && t.fromState().equals(curGroupOfStates) && !t.toState().equals(curHelper)) {
+							// if the transition exsists : same fromState , same char , toState not and if the new the toState is empty ---> do not change
+							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && !t.toState().equals(helperForDelta)) {
 								containsNotEmptyNotSame=true;
 							}
 						}
 						
 						if(!containsTheSame) {
-							if(containsEmpty) {
+							if(containsEmpty) 
 								delta.remove(temp);
-							}
 							if(!containsNotEmptyNotSame)
-								delta.add(new Transition(curGroupOfStates, c, curGroup));
+								delta.add(new Transition(currentGroupOfStatesToCheckTransitions, c, toStateWithEps));
 						}
-						
 					}
 				}
-				counterOfStates=0;
 			}
 			helper.remove(0);
 		}
 		
-		//add hard code for {} state
+		//add all [] :
+		for (Transition t : delta) {
+			StatesInGroups emptyState = (StatesInGroups)t.toState();
+			if(emptyState.isEmptyGroup()) {
+				k.add(emptyState);
+				break;
+			}
+		}
+		for (Character ch : newAlphabet) {
+			if(ch!=0)
+				delta.add(new Transition(new StatesInGroups(null), ch, new StatesInGroups(null)));
+		}
 		
+			
 		
 		//A:
-		Set<StatesInGroups> newAcceptingStates= this.acceptingStates(k);
+		Set<State> newAcceptingStates= this.acceptingStates(k);
 		
 		
 		//here
-		//DFSM newM= new DFSM(k, newAlphabet, delta, newstartStates, newAcceptingStates);
-		return null;
+		return new DFSM(k, newAlphabet, delta, initialStates, newAcceptingStates);
 	}
 }

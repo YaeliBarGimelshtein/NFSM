@@ -1,5 +1,6 @@
 package ac.il.afeka.fsm;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,22 +22,38 @@ public class StatesInGroups extends IdentifiedState {
 	public Set<State> getStatesGroup() {
 		return statesGroup;
 	}
+	
+	
+	public boolean isEmptyGroup() {
+		return this.statesGroup.isEmpty();
+	}
 
+	public void setStatesGroup(Set<State> statesGroup) {
+		this.statesGroup = statesGroup;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		StatesInGroups lala= (StatesInGroups)obj;
+		if(this.getStatesGroup().size()!=lala.getStatesGroup().size())
+			return false;
+		
+		ArrayList<State> arr1= new ArrayList<>();
+		arr1.addAll(this.getStatesGroup());
+		
+		ArrayList<State> arr2= new ArrayList<>();
+		arr2.addAll(lala.getStatesGroup());
+		
+		int counter=0;
+		for (State state : arr1) {
+			for (State state2 : arr2) {
+				if(state.compareTo(state2)==0)
+					counter++;
+			}
+		}
+		if(counter==arr1.size())
 			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		StatesInGroups other = (StatesInGroups) obj;
-		if (statesGroup == null) {
-			if (other.statesGroup != null)
-				return false;
-		} else if (!statesGroup.equals(other.statesGroup))
-			return false;
-		return true;
+		
+		return false;
 	}
 }
