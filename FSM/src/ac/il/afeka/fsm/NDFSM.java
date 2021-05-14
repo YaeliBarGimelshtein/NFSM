@@ -408,81 +408,47 @@ public class NDFSM {
 		//loop on helper array and find out new states(groups of states) and add transitions to delta
 		ArrayList<StatesInGroups> helper= new ArrayList<>();
 		helper.add(initialStates);
-		StatesInGroups helperForDelta= new StatesInGroups(null);
+		k.add(initialStates); //add first state to k
 		
 		while (!helper.isEmpty()) {
-			StatesInGroups currentGroupOfStatesToCheckTransitions = helper.get(0); // take current group of states in the helper																	
-			for (State state : currentGroupOfStatesToCheckTransitions.getStatesGroup()) { // go over each state in the current group
-				for (Character c : this.alphabet) { // go over each char in alphabet
-					if (c != 0) {
-						//crate the group of toState from state+ c
-						Set<State> statesGotFromCurrentStateByTransition = this.transitions.at(state, c); // for each new state need to check where it leads
-						StatesInGroups toStateWithEps = new StatesInGroups(null);// create new group of eps states
-						for (State s : statesGotFromCurrentStateByTransition) 
-							toStateWithEps=eps(s); //add new states the current state leads to with eps function
-						
-						//add to helper if the toState group is not already there
-						boolean dontAdd=false;
-						for (StatesInGroups s : helper) {
-							if(s.equals(toStateWithEps))
-								dontAdd=true;
-						}
-						if(!dontAdd && !toStateWithEps.getStatesGroup().isEmpty())
-							helper.add(toStateWithEps);
-						
-						//add to k the new State
-						if(!toStateWithEps.getStatesGroup().isEmpty()) 
-							k.add(toStateWithEps);
-						
-						//add to delta the new transition
-						boolean containsTheSame=false;
-						boolean containsEmpty=false;
-						boolean containsNotEmptyNotSame=false;
-						Transition temp= null;
-						
-						for (Transition t : delta) {
-							// if already exsists the same exactlly---> do not add again
-							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && t.toState().equals(toStateWithEps)) {
-								containsTheSame=true;
-							}
-							// if the transition exsists : same fromState , same char but toState empty ---> put this new transition instead old one
-							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && t.toState().equals(helperForDelta)) {
-								containsEmpty=true;
-								temp=t;
-							}
-							// if the transition exsists : same fromState , same char , toState not and if the new the toState is empty ---> do not change
-							if(t.symbol()== c && t.fromState().equals(currentGroupOfStatesToCheckTransitions) && !t.toState().equals(helperForDelta)) {
-								containsNotEmptyNotSame=true;
-							}
-						}
-						
-						if(!containsTheSame) {
-							if(containsEmpty) 
-								delta.remove(temp);
-							if(!containsNotEmptyNotSame)
-								delta.add(new Transition(currentGroupOfStatesToCheckTransitions, c, toStateWithEps));
-						}
-					}
+			StatesInGroups fromState = helper.get(0); // from state
+			StatesInGroups toStateWithEps = new StatesInGroups(null);// to state
+			
+			//create the toState group
+			for (Character c : this.alphabet) {
+				for (State state : fromState.getStatesGroup()) { // go over each state in the current group																			
+					// crate the group of toState from state+ c
+					Set<State> statesGotFromCurrentStateByTransition = this.transitions.at(state, c); // for each new state need to check where it leads																				
+					for (State s : statesGotFromCurrentStateByTransition)
+						toStateWithEps.addNewStates(eps(s)); // add new states the current state leads to with eps function										
 				}
+				//check if add to helper
+				boolean dontAddToHelper=false;
+				for (StatesInGroups s : helper) { 
+					if(s.equals(toStateWithEps))
+						dontAddToHelper=true;
+				}
+				//check if add to k
+				boolean dontAddToK=false;
+				for (State s : k) { 		
+					if(s.equals(toStateWithEps))
+						dontAddToK=true;
+				}
+				//add to helper if the toState group is not already there
+				if(!dontAddToK && !dontAddToHelper)
+					helper.add(toStateWithEps);
+				
+				//add to k the new State if not already there
+				if(!dontAddToK) 
+					k.add(toStateWithEps);
+				
+				//add to delta the new transition
+				delta.add(new Transition(fromState, c, toStateWithEps));
+				toStateWithEps = new StatesInGroups(null);
 			}
 			helper.remove(0);
 		}
-		
-		//add all [] :
-		for (Transition t : delta) {
-			StatesInGroups emptyState = (StatesInGroups)t.toState();
-			if(emptyState.isEmptyGroup()) {
-				k.add(emptyState);
-				break;
-			}
-		}
-		for (Character ch : newAlphabet) {
-			if(ch!=0)
-				delta.add(new Transition(new StatesInGroups(null), ch, new StatesInGroups(null)));
-		}
-		
 			
-		
 		//A:
 		Set<State> newAcceptingStates= this.acceptingStates(k);
 		

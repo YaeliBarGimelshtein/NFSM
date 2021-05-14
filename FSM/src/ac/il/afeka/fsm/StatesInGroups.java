@@ -1,5 +1,6 @@
 package ac.il.afeka.fsm;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -55,5 +56,13 @@ public class StatesInGroups extends IdentifiedState {
 			return true;
 		
 		return false;
+	}
+	
+	public void prettyPrint(PrintStream out) {
+		out.print(this.getStatesGroup().toString());
+	}
+	
+	public void addNewStates(StatesInGroups moreStates) {
+		this.statesGroup.addAll(moreStates.statesGroup);
 	}
 }
