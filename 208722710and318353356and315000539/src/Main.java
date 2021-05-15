@@ -30,19 +30,27 @@ public class Main implements Submission, Assignment3 {
 //				+ "/0"						// staring state
 //				+ "/4";						// accepted state
 
-		String encoding = "0 1 2 3  " 				// machine states
-				+ "/a b " 				// alphabet
-				+ "/0,a,0;" 	// transections
-				+ "0,b,1;"
-				+ "0,b,2;"
-				+ "2,a,2;"
-				+ "2,b,1;"
-				+ "1,a,1;"
-				+ "1,b,2;"
-				+ "1,a,3;"
-				+ "3,b,2"
-				+ "/0"						// staring state
-				+ "/0 3";						// accepted state
+//		String encoding = "0 1 2 3  " 				// machine states
+//				+ "/a b " 				// alphabet
+//				+ "/0,a,0;" 	// transections
+//				+ "0,b,1;"
+//				+ "0,b,2;"
+//				+ "2,a,2;"
+//				+ "2,b,1;"
+//				+ "1,a,1;"
+//				+ "1,b,2;"
+//				+ "1,a,3;"
+//				+ "3,b,2"
+//				+ "/0"						// staring state
+//				+ "/0 3";						// accepted state
+		String encoding= "1 2 "
+				+"/0 1"
+				+"/1,0,1;"
+				+"1,1,2;"
+				+"2,0,2;"
+				+"2,1,1"
+				+"/1"
+				+"/2";
 		DFSM rr= new NDFSM(encoding).toDFSM();
 		rr.prettyPrint(System.out);
 	}
